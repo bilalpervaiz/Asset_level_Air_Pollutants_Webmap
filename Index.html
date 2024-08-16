@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>APAD Web Map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.1-dev/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.1-dev/mapbox-gl-geocoder.css"
+        type="text/css" />
+
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #topBar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: #4A5768;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-family: 'Open Sans', sans-serif;
+            z-index: 2;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #topBar .left-section {
+            display: flex;
+            align-items: center;
+        }
+
+        #topBar img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        #topBar .nav-links {
+            margin: 0 auto;
+            text-align: center;
+            margin-left: 70px;
+        }
+
+        #topBar .nav-links a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+        }
+
+        #menuButton {
+            position: absolute;
+            top: 150px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            font-family: 'Open Sans', sans-serif;
+            border-radius: 3px;
+            z-index: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #menuButton i {
+            font-size: 20px;
+        }
+
+        #menu {
+            position: absolute;
+            top: 150px;
+            right: 50px;
+            background: white;
+            padding: 10px;
+            font-family: 'Open Sans', sans-serif;
+            border-radius: 3px;
+            z-index: 1;
+            display: none;
+            /* Hide the menu initially */
+        }
+
+        .closeButton {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+        }
+
+
+        #legend {
+            position: absolute;
+            top: 130px;
+            left: 50px;
+            background: #4A5768;
+            color: white;
+            padding: 10px;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+            z-index: 1;
+            display: none;
+
+        }
+
+        .legend-key {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+
+
+        }
+
+        #legendButton {
+            position: absolute;
+            top: 130px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            font-family: 'Open Sans', sans-serif;
+            border-radius: 3px;
+            z-index: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graduated-circles {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+            align-items: center;
+            justify-content: center;
+            padding-inline: 20px;
+            padding-left: 10px;
+        }
+
+        .graduated-circles div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .graduated-circles .circle {
+            display: inline-block;
+            border-radius: 50%;
+            background-color: red;
+            margin-right: 20px;
+        }
+
+
+        /* General Styles for the Panel */
+        label {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        #filterPanel {
+            position: absolute;
+            top: 180px;
+            left: 50px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+            z-index: 1;
+            display: none;
+        }
+
+        #country,
+        #coal_country,
+        #resetButton,
+        #filterButton {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .map-overlay {
+            position: absolute;
+            bottom: 50px;
+            right: 0;
+            background: #fff;
+            margin-right: 20px;
+            font-family: Arial, sans-serif;
+            overflow: auto;
+            border-radius: 3px;
+        }
+
+        #filtersearch {
+            position: absolute;
+            top: 180px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            font-family: 'Open Sans', sans-serif;
+            border-radius: 3px;
+            z-index: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .session {
+            margin-bottom: 20px;
+        }
+
+        .row {
+            height: 12px;
+            width: 100%;
+        }
+
+        .colors {
+            background: linear-gradient(to right,
+                    #3DA1D1,
+                    #ABCEAB,
+                    #F1FB7B,
+                    #F8A047,
+                    #F0261C,
+                    #F0261C);
+            margin-bottom: 5px;
+        }
+
+        .label {
+            width: 15%;
+            display: inline-block;
+            text-align: center;
+        }
+
+
+
+        .sessiondecay {
+            margin-bottom: 20px;
+        }
+
+        .rowdecay {
+            height: 12px;
+            width: 100%;
+        }
+
+        .colorsdecay {
+            background: linear-gradient(to right,
+                    #FFFFB2,
+                    #FECC5C,
+                    #FD8D3C,
+                    #F03B20,
+                    #BD0026);
+            margin-bottom: 5px;
+        }
+
+        .labeldecay {
+            width: 15%;
+            display: inline-block;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+// Basemap Change  Placement Start
+    <div id="menuButton"><i class="fas fa-globe"></i></div>
+    <div id="menu">
+        <button class="closeButton">&times;</button>
+        <input id="streets-v12" type="radio" name="rtoggle" value="streets-v12" checked="checked">
+        <label for="streets-v12">Streets</label><br>
+        <input id="satellite-streets-v12" type="radio" name="rtoggle" value="satellite-streets-v12">
+        <label for="satellite-streets-v12">Satellite</label><br>
+        <input id="outdoors-v12" type="radio" name="rtoggle" value="outdoors-v12">
+        <label for="outdoors-v12">Outdoors</label><br>
+        <input id="light-v11" type="radio" name="rtoggle" value="light-v11">
+        <label for="light-v11">Light</label><br>
+        <input id="dark-v11" type="radio" name="rtoggle" value="dark-v11">
+        <label for="dark-v11">Dark</label><br>
+    </div>
+// Basemap Change Placement End
+
+// Navigation Bar Tabs Start
+    <div id="topBar">
+        <div class="left-section">
+            <img src="app-logo.png" alt="Logo">
+            <h1>Air Pollution Asset Level Detection - APAD</h1>
+        </div>
+        <div class="nav-links">
+            <a href="https://apad.world/">More information</a>
+            <a href="https://survey123.arcgis.com/share/491dccba7ed14379ab459551f96722ff">Survey Form</a>
+        </div>
+    </div>
+// Navigation Bar Tabs End
+
+
+    <div id="map"></div>
+
+// Legend Layers Display Start
+    <div id="legendButton"><i class="fas fa-layer-group"></i></div>
+    <div id="legend">
+        <button class="closeButton">&times;</button>
+        <h3>Layers</h3>
+
+        <div>
+            <input id="toggleCoal" type="checkbox" name="Coal" checked>
+            <span>Coal_IGP</span><br>
+            <span style="align-content:center;">PM10 tonnes/yr</span>
+            <div class="graduated-circles">
+                <div><span class="circle" style="width: 7px; height: 7px; background-color: rgb(254,229,217);"></span> 0
+                </div>
+                <div><span class="circle" style="width: 15px; height: 15px; background-color: rgb(252,187,161);"></span>
+                    540</div>
+                <div><span class="circle" style="width: 20px; height: 20px; background-color: rgb(252,146,114);"></span>
+                    1080</div>
+                <div><span class="circle" style="width: 30px; height: 30px; background-color: rgb(251,106,74);"></span>
+                    1620</div>
+                <div><span class="circle" style="width: 40px; height: 40px; background-color: rgb(222,45,38);"></span>
+                    2160</div>
+                <div><span class="circle" style="width: 50px; height: 50px; background-color: rgb(165,15,21);"></span>
+                    2700</div>
+            </div>
+        </div>
+        <br>
+        <div>
+            <input id="togglepop" type="checkbox" name="population" unchecked>
+            <span>Population Grid</span><br>
+            <span>Count / 800 Sqm</span>
+            <div class="row colors"></div>
+            <div class="row labels">
+                <div class="label">0</div>
+                <div class="label"></div>
+                <div class="label"></div>
+                <div class="label"></div>
+                <div class="label">17192</div>
+            </div>
+        </div>
+        <br>
+        <div>
+            <input id="toggledecay" type="checkbox" name="population" unchecked>
+            <span>Pollutant Decay</span><br>
+            <div class="rowdecay colorsdecay"></div>
+            <div class="rowdecay labelsdecay">
+                <div class="label">Min</div>
+                <div class="label"></div>
+                <div class="label"></div>
+                <div class="label"></div>
+                <div class="label">Max</div>
+            </div>
+        </div>
+
+        <br>
+
+        <div>
+            <input id="toggleFossil" type="checkbox" name="fossil" unchecked>
+            <div class="legend-key" style="background-color: blue;"></div>
+            <span>Fossil Fuel</span>
+        </div>
+        <div>
+            <input id="toggleGPW" type="checkbox" name="GP" unchecked>
+            <div class="legend-key" style="background-color:black;"></div>
+            <span>GPW</span>
+        </div>
+
+
+    </div>
+// Legend Layers Display End
+
+    </div>
+// Filter Layers Display start
+    <div id="filtersearch"><i class="fas fa-filter"></i></div>
+    <div id="filterPanel">
+        <button class="closeButton">&times;</button>
+        <label for="country">Country:</label>
+        <select id="coal_country">
+            <option value="">Select Country</option>
+            <option value="India">India</option>
+            <option value="Pakistan">Pakistan</option>
+            <option value="Bangladesh">Bangladesh</option>
+            <!-- Add more countries as needed -->
+        </select>
+        <label for="filterColumn">Asset</label>
+        <select id="filterColumn">
+            <option value="">Select Asset</option>
+            <option value="PM25_tonne">PM25_tonne</option>
+            <option value="SO2_tonnes">SO2_tonnes</option>
+            <!-- Add more columns as needed -->
+        </select>
+        <button id="filterButton">Filter</button>
+        <button id="resetButton">Reset</button>
+    </div>
+// Filter Layers Display End
+
+// Hover Display Start
+    <div class="map-overlay" id="features">
+        <h2>Pollutants from Coal Plant</h2>
+        <div id="pd">
+            <p>Hover over a Data and Check Details about Pollutants</p>
+        </div>
+    </div>
+// Hover Display End
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoibXVoYW1tYWQtYmlsYWw3NjMiLCJhIjoiY2w1NzA1NW90MDF4ZDNkbG9iYTUxeGdveiJ9.XSisxZKgp-ZzmgWWoy4WhA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12', // style URL
+            center: [78.8181577, 28.7650135,], // starting position
+            zoom: 4 // starting zoom
+        });
+
+        const menuButton = document.getElementById('menuButton');
+        const menu = document.getElementById('menu');
+        const layerList = document.getElementById('menu');
+        const inputs = layerList.getElementsByTagName('input');
+
+        const legendButton = document.getElementById('legendButton');
+        const legend = document.getElementById('legend');
+        const filterButton = document.getElementById('filtersearch');
+        const filterPanel = document.getElementById('filterPanel');
+
+        // Toggle the menu visibility when the button is clicked
+        menuButton.onclick = () => {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        };
+
+// Data Layer Rendering with Changing basemap Functionality Start
+        for (const input of inputs) {
+            input.onclick = (layer) => {
+                const style = `mapbox://styles/mapbox/${layer.target.value}`;
+                map.setStyle(style);
+                map.on('style.load', () => {
+                    map.addSource('population', {
+                        'type': 'raster',
+                        'url': 'mapbox://muhammad-bilal763.bra3hxpk'
+                    });
+                    map.addLayer({
+                        'id': 'population',
+                        'source': 'population',
+                        'type': 'raster',
+                        layout: {
+                            visibility: 'none' // This is where you set initial visibility
+                        }
+                    });
+
+
+
+                    map.addSource('fossil_fuel', {
+                        type: 'geojson',
+                        data: 'https://gist.githubusercontent.com/bilalpervaiz/597c50eff1747c1a3c8c948bef6ccc19/raw/6984d3a37d75dc8ca7489ee031377b2d57da67d2/fossil_fuel.geojson'
+                    });
+                    map.addLayer({
+                        'id': 'fossil',
+                        'type': 'circle',
+                        'source': 'fossil_fuel',
+                        layout: {
+                            visibility: 'none'
+                        },
+                        'paint': {
+                            'circle-radius': 5,
+                            'circle-stroke-width': 2,
+                            'circle-color': 'blue',
+                            'circle-stroke-color': 'white'
+                        }
+                    });
+                    map.on('click', 'fossil', (e) => {
+
+                        new mapboxgl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(e.features[0].properties.original_i)
+                            .addTo(map)
+                    });
+
+
+
+                    map.addSource('coal_IGP', {
+                        type: 'geojson',
+                        data: 'https://gist.githubusercontent.com/bilalpervaiz/d7db247dc843951c9c51089a58225d8c/raw/b3864b0192e5115dbf7ad682f4a909177916b799/coal.geojson'
+                    });
+                    map.addLayer({
+                        'id': 'coal',
+                        'type': 'circle',
+                        'source': 'coal_IGP', // reference the data source
+                        'paint': {
+                            'circle-color': [
+                                'interpolate',
+                                ['linear'],
+                                ['get', 'PM25_tonne'],
+                                0, 'rgb(254,229,217)',   // light yellow for lowest values
+                                540, 'rgb(252,187,161)', // light orange
+                                1080, 'rgb(252,146,114)', // orange
+                                1620, 'rgb(251,106,74)',  // red-orange
+                                2160, 'rgb(222,45,38)',  // red
+                                2700, 'rgb(165,15,21)'    // dark red for highest values
+                            ],
+                            'circle-radius': [
+                                'interpolate',
+                                ['linear'],
+                                ['get', 'PM25_tonne'],
+                                0, 5,
+                                540, 7,
+                                1080, 9,
+                                1620, 11,
+                                2160, 13,
+                                2700, 15
+                            ]
+                        }
+                    });
+                    map.on('click', 'coal', (e) => {
+                        var properties = e.features[0].properties;
+                        var plantName = properties.Plant_name;
+                        var country = properties.Country;
+                        var pm10 = properties.PM10_tonne;
+                        var so2 = properties.SO2_tonnes;
+
+                        new mapboxgl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(
+                                `<h3>${plantName}</h3>
+                        <p>Country: ${country}</p>
+                        <p>PM10 Emissions: ${pm10} tonnes/Yr</p>
+                        <p>SO2 Emissions: ${so2} tonnes/Yr</p>`
+                            )
+                            .addTo(map);
+                    });
+
+
+
+                    map.addSource('GPW', {
+                        type: 'geojson',
+                        data: 'https://gist.githubusercontent.com/bilalpervaiz/e2c93d2017fc1ed90f9a6d5259701a5e/raw/4dd19fe557d29b9268f11e233169948e95c24803/GPW.geojson'
+                    });
+                    map.addLayer({
+                        'id': 'GP',
+                        'type': 'circle',
+                        'source': 'GPW', // reference the data source
+                        'paint': {
+                            'circle-radius': 5,
+                            'circle-stroke-width': 2,
+                            'circle-color': 'black',
+                            'circle-stroke-color': 'white'
+                        },
+                        layout: {
+                            visibility: 'none'
+                        },
+                    });
+                    map.on('click', 'GP', (e) => {
+
+                        new mapboxgl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(e.features[0].properties.name)
+                            .addTo(map)
+                    });
+
+                    map.addSource('indian_plain', {
+                        type: 'geojson',
+                        data: 'https://gist.githubusercontent.com/bilalpervaiz/777aa4f0989c9abe556b3921bc558ab9/raw/69131b86d168ba2edccdcb53857ea0e468693beb/indian_plain.geojson'
+                    });
+                    map.addLayer({
+                        'id': 'indian',
+                        'type': 'line',
+                        'source': 'indian_plain',
+                        'paint': {
+                            'line-color': 'black',
+                            'line-width': 1,
+                        } // reference the data source
+
+                    });
+
+                    map.addSource('pollutant_decay', {
+                        type: 'geojson',
+                        data: 'https://gist.githubusercontent.com/bilalpervaiz/97a2ce64252ad5a095c9222f4c9ae5b1/raw/4fcc0590f9b28e13a369fb93f4f0ff00410844a6/pollutant_decay.geojson'
+                    });
+
+                    map.addLayer({
+                        'id': 'pollutant',
+                        'type': 'heatmap',
+                        'source': 'pollutant_decay',
+                        'maxzoom': 12,
+                        layout: {
+                            visibility: 'none'
+                        },
+                        'paint': {
+                            // increase weight as diameter breast height increases
+                            'heatmap-weight': {
+                                'property': 'decay_PM10_1',
+                                'type': 'exponential',
+                                'stops': [
+                                    [0.030291835876543865, 0],
+                                    [3.332101946419825, 1]
+                                ]
+                            },
+                            // increase intensity as zoom level increases
+                            'heatmap-intensity': {
+                                'stops': [
+                                    [0.030291835876543865, 1],
+                                    [3.332101946419825, 3]
+                                ]
+                            },
+                            // use sequential color palette to use exponentially as the weight increases
+                            'heatmap-color': [
+                                'interpolate',
+                                ['linear'],
+                                ['heatmap-density'],
+                                0,
+                                'rgba(255,255,178,0)',
+                                0.2,
+                                'rgb(254,204,92)',
+                                0.4,
+                                'rgb(253,141,60)',
+                                0.6,
+                                'rgb(240,59,32)',
+                                0.8,
+                                'rgb(189,0,38)'
+                            ],
+                            // increase radius as zoom increases
+                            'heatmap-radius': {
+                                'stops': [
+                                    [11, 15],
+                                    [15, 20]
+                                ]
+                            },
+                            // decrease opacity to transition into the circle layer
+                            'heatmap-opacity': {
+                                'default': 1,
+                                'stops': [
+                                    [14, 1],
+                                    [15, 0]
+                                ]
+                            }
+                        }
+                    });
+
+
+//Toggel the Visibility of Layers
+
+                    document.getElementById('toggleFossil').addEventListener('change', (e) => {
+                        map.setLayoutProperty('fossil', 'visibility', e.target.checked ? 'visible' : 'none');
+                    });
+
+                    document.getElementById('toggleCoal').addEventListener('change', (e) => {
+                        map.setLayoutProperty('coal', 'visibility', e.target.checked ? 'visible' : 'none');
+                    });
+
+                    document.getElementById('toggleGPW').addEventListener('change', (e) => {
+                        map.setLayoutProperty('GP', 'visibility', e.target.checked ? 'visible' : 'none');
+                    });
+                    document.getElementById('togglepop').addEventListener('change', (e) => {
+                        map.setLayoutProperty('population', 'visibility', e.target.checked ? 'visible' : 'none');
+                    });
+                    document.getElementById('toggledecay').addEventListener('change', (e) => {
+                        map.setLayoutProperty('pollutant', 'visibility', e.target.checked ? 'visible' : 'none');
+                    });
+
+                });
+                menu.style.display = 'none';
+            };
+        }
+// Data Layer Rendering with Changing basemap Functionality End
+
+
+// Initializing Geocoder Functionality Start
+
+        const geocoder = new MapboxGeocoder({
+            // Initialize the geocoder
+            accessToken: mapboxgl.accessToken, // Set the access token
+            mapboxgl: mapboxgl, // Set the mapbox-gl instance
+            marker: true, // Do not use the default marker style
+            placeholder: 'Search for places', // Placeholder text for the search bar
+
+        });
+        map.addControl(geocoder);
+// Initializing Geocoder Functionality End
+
+// Intialize Data Layers first when the map load start
+        map.on('load', () => {
+
+
+            map.addSource('population', {
+                'type': 'raster',
+                'url': 'mapbox://muhammad-bilal763.bra3hxpk'
+            });
+            map.addLayer({
+                'id': 'population',
+                'source': 'population',
+                'type': 'raster',
+                layout: {
+                    visibility: 'none' // This is where you set initial visibility
+                }
+            });
+            // Add a data source containing GeoJSON data.
+            map.addSource('fossil_fuel', {
+                type: 'geojson',
+                data: 'https://gist.githubusercontent.com/bilalpervaiz/597c50eff1747c1a3c8c948bef6ccc19/raw/6984d3a37d75dc8ca7489ee031377b2d57da67d2/fossil_fuel.geojson'
+            });
+            map.addLayer({
+                'id': 'fossil',
+                'type': 'circle',
+                'source': 'fossil_fuel',
+                'paint': {
+                    'circle-radius': 5,
+                    'circle-stroke-width': 2,
+                    'circle-color': 'blue',
+                    'circle-stroke-color': 'white'
+                },
+                layout: {
+                    visibility: 'none' // This is where you set initial visibility
+                }
+            });
+            map.on('click', 'fossil', (e) => {
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(e.features[0].properties.original_i)
+                    .addTo(map)
+            });
+
+            map.addSource('coal_IGP', {
+                type: 'geojson',
+                data: 'https://gist.githubusercontent.com/bilalpervaiz/d7db247dc843951c9c51089a58225d8c/raw/b3864b0192e5115dbf7ad682f4a909177916b799/coal.geojson'
+            });
+            map.addLayer({
+                'id': 'coal',
+                'type': 'circle',
+                'source': 'coal_IGP', // reference the data source
+                'paint': {
+                    'circle-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'PM25_tonne'],
+                        0, 'rgb(254,229,217)',   // light yellow for lowest values
+                        540, 'rgb(252,187,161)', // light orange
+                        1080, 'rgb(252,146,114)', // orange
+                        1620, 'rgb(251,106,74)',  // red-orange
+                        2160, 'rgb(222,45,38)',  // red
+                        2700, 'rgb(165,15,21)'    // dark red for highest values
+                    ],
+                    'circle-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'PM25_tonne'],
+                        0, 5,
+                        540, 7,
+                        1080, 9,
+                        1620, 11,
+                        2160, 13,
+                        2700, 15
+                    ]
+                }
+
+            });
+            map.on('click', 'coal', (e) => {
+                var properties = e.features[0].properties;
+                var plantName = properties.Plant_name;
+                var country = properties.Country;
+                var pm10 = properties.PM10_tonne;
+                var so2 = properties.SO2_tonnes;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        `<h3>${plantName}</h3>
+                        <p>Country: ${country}</p>
+                        <p>PM10 Emissions: ${pm10} tonnes/Yr</p>
+                        <p>SO2 Emissions: ${so2} tonnes/Yr</p>`
+                    )
+                    .addTo(map);
+            });
+
+            map.addSource('GPW', {
+                type: 'geojson',
+                data: 'https://gist.githubusercontent.com/bilalpervaiz/e2c93d2017fc1ed90f9a6d5259701a5e/raw/4dd19fe557d29b9268f11e233169948e95c24803/GPW.geojson'
+            });
+            map.addLayer({
+                'id': 'GP',
+                'type': 'circle',
+                'source': 'GPW', // reference the data source
+                'paint': {
+                    'circle-radius': 5,
+                    'circle-stroke-width': 2,
+                    'circle-color': 'black',
+                    'circle-stroke-color': 'white'
+                },
+                layout: {
+                    visibility: 'none' // This is where you set initial visibility
+                }
+            });
+            map.on('click', 'GP', (e) => {
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(e.features[0].properties.name)
+                    .addTo(map)
+            });
+
+
+            map.addSource('indian_plain', {
+                type: 'geojson',
+                data: 'https://gist.githubusercontent.com/bilalpervaiz/777aa4f0989c9abe556b3921bc558ab9/raw/69131b86d168ba2edccdcb53857ea0e468693beb/indian_plain.geojson'
+            });
+            map.addLayer({
+                'id': 'indian',
+                'type': 'line',
+                'source': 'indian_plain',
+                'paint': {
+                    'line-color': 'black',
+                    'line-width': 1,
+                } // reference the data source
+
+            });
+
+            map.addSource('pollutant_decay', {
+                type: 'geojson',
+                data: 'https://gist.githubusercontent.com/bilalpervaiz/97a2ce64252ad5a095c9222f4c9ae5b1/raw/4fcc0590f9b28e13a369fb93f4f0ff00410844a6/pollutant_decay.geojson'
+            });
+            map.addLayer({
+                'id': 'pollutant',
+                'type': 'heatmap',
+                'source': 'pollutant_decay',
+                'maxzoom': 12,
+                layout: {
+                    visibility: 'none' // This is where you set initial visibility
+                },
+                'paint': {
+                    // increase weight as diameter breast height increases
+                    'heatmap-weight': {
+                        'property': 'decay_PM10_1',
+                        'type': 'exponential',
+                        'stops': [
+                            [0.030291835876543865, 0],
+                            [3.332101946419825, 1]
+                        ]
+                    },
+                    // increase intensity as zoom level increases
+                    'heatmap-intensity': {
+                        'stops': [
+                            [0.030291835876543865, 1],
+                            [3.332101946419825, 3]
+                        ]
+                    },
+                    // use sequential color palette to use exponentially as the weight increases
+                    'heatmap-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['heatmap-density'],
+                        0,
+                        'rgba(255,255,178,0)',
+                        0.2,
+                        'rgb(254,204,92)',
+                        0.4,
+                        'rgb(253,141,60)',
+                        0.6,
+                        'rgb(240,59,32)',
+                        0.8,
+                        'rgb(189,0,38)'
+                    ],
+                    // increase radius as zoom increases
+                    'heatmap-radius': {
+                        'stops': [
+                            [11, 15],
+                            [15, 20]
+                        ]
+                    },
+                    // decrease opacity to transition into the circle layer
+                    'heatmap-opacity': {
+                        'default': 1,
+                        'stops': [
+                            [14, 1],
+                            [15, 0]
+                        ]
+                    }
+                }
+            });
+
+
+//Toggel the Visibility of Layers
+
+            document.getElementById('toggleFossil').addEventListener('change', (e) => {
+                map.setLayoutProperty('fossil', 'visibility', e.target.checked ? 'visible' : 'none');
+            });
+
+            document.getElementById('toggleCoal').addEventListener('change', (e) => {
+                map.setLayoutProperty('coal', 'visibility', e.target.checked ? 'visible' : 'none');
+            });
+
+            document.getElementById('toggleGPW').addEventListener('change', (e) => {
+                map.setLayoutProperty('GP', 'visibility', e.target.checked ? 'visible' : 'none');
+            });
+            document.getElementById('togglepop').addEventListener('change', (e) => {
+                map.setLayoutProperty('population', 'visibility', e.target.checked ? 'visible' : 'none');
+            });
+            document.getElementById('toggledecay').addEventListener('change', (e) => {
+                map.setLayoutProperty('pollutant', 'visibility', e.target.checked ? 'visible' : 'none');
+            });
+
+        });
+
+// Intialize Data Layers first when the map load End
+
+
+        document.querySelector('.closeButton').addEventListener('click', () => {
+            menu.style.display = 'none';
+        });
+
+        map.addControl(new mapboxgl.NavigationControl());
+
+// javascript functionality for Filter Panel start
+        document.getElementById('filterButton').addEventListener('click', () => {
+            const selectedCountry = document.getElementById('coal_country').value;
+            const filterColumn = document.getElementById('filterColumn').value;
+
+            const filters = ['all'];
+            if (selectedCountry) {
+                filters.push(['==', 'Country', selectedCountry]);
+            }
+            if (filterColumn) {
+                filters.push(['has', filterColumn]);
+            }
+
+            map.setFilter('coal', filters);
+        });
+
+        // Reset functionality
+        document.getElementById('resetButton').addEventListener('click', () => {
+            map.setFilter('coal', null);
+            document.getElementById('coal_country').value = '';
+            document.getElementById('filterColumn').value = '';
+        });
+// javascript functionality for Filter Panel End
+
+
+// Functionality of information change on hover Start
+        map.on('mousemove', (event) => {
+            const states = map.queryRenderedFeatures(event.point, {
+                layers: ['coal']
+            });
+            document.getElementById('pd').innerHTML = states.length
+                ? `<h3>Plant Name: ${states[0].properties.Plant_name}</h3><p>PM10_tonnes/yr: ${states[0].properties.PM10_tonne}</p><p>SO2_tonnes/yr: ${states[0].properties.SO2_tonnes}</p>`
+                : `<p>Hover over a Data and Check Details about Pollutants</p>`;
+        });
+// Functionality of information change on hover End
+
+
+        // Toggle Legend Panel
+        legendButton.addEventListener('click', function () {
+            if (legend.style.display === 'none' || legend.style.display === '') {
+                legend.style.display = 'block';
+                filterPanel.style.display = 'none'; // Hide filter panel
+            } else {
+                legend.style.display = 'none';
+            }
+        });
+
+        // Close Button for Legend Panel
+        document.querySelector('#legend .closeButton').addEventListener('click', function () {
+            legend.style.display = 'none';
+        });
+
+        // Toggle Filter Panel
+        filterButton.addEventListener('click', function () {
+            if (filterPanel.style.display === 'none' || filterPanel.style.display === '') {
+                filterPanel.style.display = 'block';
+                legend.style.display = 'none'; // Hide legend panel
+            } else {
+                filterPanel.style.display = 'none';
+            }
+        });
+
+        // Close Button for Filter Panel
+        document.querySelector('#filterPanel .closeButton').addEventListener('click', function () {
+            filterPanel.style.display = 'none';
+        });
+
+    </script>
+
+</body>
+
+</html>
